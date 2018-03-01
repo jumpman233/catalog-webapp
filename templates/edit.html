@@ -1,0 +1,24 @@
+<h2>Edit Item</h2>
+<form action="{{ url_for('editItem', category_name = category_name, item_name = item.name) }}" method="POST">
+    <div>
+        <label for="name">Title</label>
+        <input type="text" name="name" value="{{item.name}}"/>    
+    </div>
+    
+    <div>
+        <label for="description">Description</label>
+        <input type="text" name="description" value="{{item.description}}">    
+    </div>
+
+    <div>
+        <label for="category">Category</label>
+        <select name="category" id="category">
+            {% for i in all_category %}
+                <option value="{{i.name}}" {% if i.id== item.category_id%}selected{% endif %}>{{i.name}}</option>
+            {% endfor %}
+        </select>    
+    </div>
+
+    <button>Submit</button>
+    
+</form>
