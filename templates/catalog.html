@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+{% if isLogin %}
+<a href="{{ url_for('newItem') }}" style="margin-bottom: 10px;" class="opt-btn">Add Item</a>
+{% endif %}
+
+<h3 class="page-section-title">Latest Items</h3>
+    <ul class="list">
+        {% for i in latest_items %}
+        <li class="list-item">
+            <a href="{{url_for('itemDetail', category_name = i.c_n, item_name = i.i_n)}}"> {{i.i_n}} <span class="link_oth">({{i.c_n}})</span> </a>
+        </li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}

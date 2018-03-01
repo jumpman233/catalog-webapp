@@ -1,3 +1,16 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<h3 class="page-section-title">{{category.name}} ({{count}} Items)</h3>
+<ul class="list">
+    {% for i in items %}
+    <li class="list-item">
+        <a href="{{ url_for('itemDetail', category_name = category.name, item_name = i.name) }}">{{i.name}}</a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
+
 <html>
     <body>
         <h1>{{ category.name }}</h1>
@@ -20,9 +33,7 @@
 
             {{i.description}}
             </br>
-            <a href="{{url_for('editItem', category_name = category.name, item_name = i.name)}}">Edit</a>
-
-            <a href="{{url_for('deleteItem', category_name = category.name, item_name = i.name)}}">Delete</a>
+            
             </br>
             </br>
 

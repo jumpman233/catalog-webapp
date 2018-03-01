@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<h3 class="page-section-title">{{item.name}}</h3>
+<p class="page-desc">{{item.description}}</p>
+
+
+{% if isLogin %}
+    <a class="opt-btn" href="{{url_for('editItem', category_name = category.name, item_name = item.name)}}">Edit</a>
+    |
+    <a class="opt-btn" href="{{url_for('deleteItem', category_name = category.name, item_name = item.name)}}">Delete</a>
+{% endif %}
+
+{% endblock %}

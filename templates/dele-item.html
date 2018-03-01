@@ -1,5 +1,16 @@
-<form action="{{ url_for('deleteItem', category_name = category_name, item_name = item_name) }}" method="POST">
-   <p>Are you sure?</p>
+{% extends "layout.html" %}
 
-    <button>submit</button>
-</form>
+{% block body %}
+    <h3 class="page-section-title">Delete Item</h3>
+
+    <form action="{{ url_for('deleteItem', category_name = category_name, item_name = item_name) }}" method="POST" class="page-form">
+        <div class="form-item">
+            <p>Are you sure you want to delete item: <strong>{{ item_name }}</strong>?</p>     
+        </div>
+       
+        <div class="form-item">
+            <button>submit</button>    
+            <button><a href="{{ url_for('catelog') }}">Cancel</a></button> 
+        </div>
+    </form>
+{% endblock %}

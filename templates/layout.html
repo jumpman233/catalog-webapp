@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Catalog App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="http://lib.sinaapp.com/js/jquery/1.7.2/jquery.min.js"></script>
+    <script src="//apis.google.com/js/platform.js?onload=start"> </script>
+</head>
+<body>
+    <header class="page-header">
+        <nav class="page-nav">
+            <h2><a href="{{ url_for('catelog') }}" class="title">Catalog App</a></h2>
+            {% if isLogin %}
+            <a href="{{ url_for('logout') }}" class="log-btn" id="log-btn">Log out</a>
+            {% else %}
+            <a href="{{ url_for('showLogin') }}" class="log-btn" id="log-btn">Log in</a>
+            {% endif %}
+        </nav>
+    </header>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+                <ul class="message">
+                    {% for message in messages %}
+                    <li class="message-item"><strong>{{ message }}</strong></li>
+                    {% endfor %}
+                </ul>
+        {% endif %}
+    {% endwith %}
+    <section class="page-section">
+        {% if show_categories %}
+            <aside class="page-aside">
+                <h3 class="page-section-title">Categories</h3>
+
+                <ul class="list">
+                    {% for i in all_categories %}
+                    <li class="list-item">
+                        <a href="{{url_for('categoryList', category_name = i.name)}}">{{i.name}}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </aside>
+        {% endif %}
+        <div class="page-main">
+            {% block body %}{% endblock %}    
+        </div>
+        
+    </section>
+</body>
+</html>

@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session as login_session, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, session as login_session, make_response, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database import Base, Category, Item
+import requests
 
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
+from oauth2client.client import OAuth2WebServerFlow
 import httplib2
 import json
+import time
 
 import random, string
 
@@ -26,140 +29,158 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 def getAllCategory():
-    category = session.query(Category).all()
+    return session.query(Category).all()
+
+def getLatestItems():
+    return session.query(Item.name.label('i_n'), Category.name.label('c_n')).outerjoin(Category, Item.category_id == Category.id).order_by(Item.time.desc()).filter(Item.time > 0).limit(10).all()
+
+def checkLogin():
+    if 'access_token' in login_session:
+        return True
+    else:
+        return False
+
+def getIntTime():
+    return int(time.time())
 
 @app.route('/')
-@app.route('/hello')
-def HelloWorld():
-    category = session.query(Category).first()
-    items = session.query(Item).filter_by(category_id=category.id)
-    output = ''
-    for i in items:
-        output += i.name
-        output += '</br>'
-        output += i.description
-        output += '</br>'
-    return output
+@app.route('/catelog/')
+def catelog():
+    a = getLatestItems()
+    return render_template('catalog.html', show_categories = 1, all_categories = getAllCategory(), isLogin = checkLogin(), latest_items = getLatestItems())
+
+@app.route('/catelog/<string:category_name>/')
+def categoryList(category_name):
+    category = session.query(Category).filter_by(name = category_name).one()
+    items = session.query(Item).filter_by(category_id = category.id)
+    count = session.query(Item).filter_by(category_id = category.id).count()
+    return render_template('category.html', category = category, items = items, show_categories = 1, all_categories = getAllCategory(), isLogin = checkLogin(), count = count)
+
+@app.route('/catelog/<string:category_name>/<string:item_name>')
+def itemDetail(category_name, item_name):
+    category = session.query(Category).filter_by(name=category_name).one()
+    item = session.query(Item).filter_by(category_id=category.id, name=item_name).one()
+    item.time = getIntTime()
+    session.add(item)
+    session.commit()
+    return render_template('item.html', item = item, category = category, isLogin = checkLogin())
+
+@app.route('/catelog/JSON')
+def catelogJSON():
+    categories = session.query(Category).all()
+    items = session.query(Item).all()
+    catelog = []
+    for i in categories:
+        l = []
+        for j in items:
+            if j.category_id == i.id:
+                temp = j.serialize
+                temp['cat_id'] = i.id
+                l += [temp]
+        temp = i.serialize
+        temp['Items'] = l
+        catelog += [temp]
+
+    return jsonify(Categories=catelog)
 
 @app.route('/login')
 def showLogin():
+    if(checkLogin()):
+        return redirect(url_for('catelog'))
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
-    return render_template('login.html', STATE=state)
+    return render_template('login.html', STATE=state, isLogin = checkLogin())
 
-@app.route('/gconnect', methods=['POST'])
-def gconnect():
+@app.route('/logout')
+def logout():
+    if 'access_token' in login_session:
+        del login_session['access_token']
+        del login_session['email']
+        flash("you are now logout")
+    return redirect(url_for('catelog'))
+
+@app.route('/github-connect', methods=['POST'])
+def githubConnect():
     # Validate state token
     if request.args.get('state') != login_session['state']:
-        response = make_response(json.dumps('Invalid state parameter.'), 401)
+        response = make_response(json.dumps({'msg': 'Invalid state parameter.', 'code': 0}), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
     # Obtain authorization code
     code = request.data
 
+    url = 'https://github.com/login/oauth/access_token'
+
+    payload = {
+        'client_id': '136d23cf12215410c84b',
+        'client_secret': 'b299879392ef4f157d47d228e6a3f457c38a180a',
+        'code': code
+    }
+
+    headers = {'Accept': 'application/json'}
+
+    r = requests.post(url, params=payload, headers=headers)
+
+    response = r.json()
+
+    print response
+
+    if 'access_token' not in response:
+        response = make_response(json.dumps({'msg': 'Get access_token failed!', 'code': 0}), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    else:
+        access_token = response['access_token']
+
+    url = 'https://api.github.com/user/emails?access_token=%s' % response['access_token']
+
+    r = requests.get(url)
+
+    response = r.json()
+
     try:
-        # Upgrade the authorization code into a credentials object
-        oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
-        print oauth_flow
-        oauth_flow.redirect_uri = 'postmessage'
-        print(code)
-        credentials = oauth_flow.step2_exchange(code)
-        print(code)
-    except FlowExchangeError:
-        response = make_response(
-            json.dumps('Failed to upgrade the authorization code.'), 401)
+        if 'email' not in response[0]:
+            response = make_response(json.dumps({'msg': 'Get email failed!', 'code': 0}), 401)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+        else:
+            email = response[0]['email']
+    except Exception as e:
+        print 'email get failed';
+        response = make_response(json.dumps({'msg': 'Get email failed!', 'code': 0}), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
+    
 
-    print(code)
-    # Check that the access token is valid.
-    access_token = credentials.access_token
-    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
-           % access_token)
-    h = httplib2.Http()
-    result = json.loads(h.request(url, 'GET')[1])
-    # If there was an error in the access token info, abort.
-    if result.get('error') is not None:
-        response = make_response(json.dumps(result.get('error')), 500)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+    login_session['email'] = email
+    login_session['access_token'] =  access_token
 
-    # Verify that the access token is used for the intended user.
-    gplus_id = credentials.id_token['sub']
-    if result['user_id'] != gplus_id:
-        response = make_response(
-            json.dumps("Token's user ID doesn't match given user ID."), 401)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+    flash("you are now logged in as %s" % login_session['email'])
 
-    # Verify that the access token is valid for this app.
-    if result['issued_to'] != CLIENT_ID:
-        response = make_response(
-            json.dumps("Token's client ID does not match app's."), 401)
-        print "Token's client ID does not match app's."
-        response.headers['Content-Type'] = 'application/json'
-        return response
-
-    stored_access_token = login_session.get('access_token')
-    stored_gplus_id = login_session.get('gplus_id')
-    if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
-                                 200)
-        response.headers['Content-Type'] = 'application/json'
-        return response
-
-    # Store the access token in the session for later use.
-    login_session['access_token'] = credentials.access_token
-    login_session['gplus_id'] = gplus_id
-
-    # Get user info
-    userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
-    params = {'access_token': credentials.access_token, 'alt': 'json'}
-    answer = requests.get(userinfo_url, params=params)
-
-    data = answer.json()
-
-    login_session['username'] = data['name']
-    login_session['picture'] = data['picture']
-    login_session['email'] = data['email']
-
-    output = ''
-    output += '<h1>Welcome, '
-    output += login_session['username']
-    output += '!</h1>'
-    output += '<img src="'
-    output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
-    flash("you are now logged in as %s" % login_session['username'])
-    print "done!"
-    return output
-
-@app.route('/catelog/<string:category_name>/')
-def categoryList(category_name):
-    category = session.query(Category).filter_by(name=category_name).one()
-    items = session.query(Item).filter_by(category_id=category.id)
-    output = ''
-    for i in items:
-        output += i.name
-        output += '</br>'
-        output += i.description
-        output += '</br>'
-        output += '</br>'
-    return render_template('main.html', category = category, items = items)
+    response = make_response(json.dumps({'msg':'Auth success!', 'code': 1}), 200)
+    response.headers['Content-Type'] = 'application/json'
+    return response
 
 @app.route('/catelog/new/', methods = ['POST', 'GET'])
 def newItem():
     if request.method == 'POST':
         category = session.query(Category).filter_by(name=request.form['category']).one()
+
+        ifItem = session.query(Item).filter_by(category_id = category.id, name = request.form['name']).all()
+        if len(ifItem) > 0:
+            flash('new item created failed: item(%s) is already exist in category(%s)' % (request.form['name'], category.name))
+            return redirect(url_for('categoryList', category_name=category.name))
+
         newItem = Item(name=request.form['name'], description=request.form[
-                               'description'], category_id=category.id)
+                               'description'], category_id=category.id, time=getIntTime())
         session.add(newItem)
         session.commit()
 
-        flash('new item created')
+        flash('new item created: %s' % newItem.name)
 
-        return redirect(url_for('categoryList', category_name=category.name))
+        return redirect(url_for('itemDetail', category_name=category.name, item_name = newItem
+            .name))
     else:
         all_category = session.query(Category).all()
         return render_template('new-item.html', all_category = all_category)
@@ -171,23 +192,29 @@ def editItem(category_name, item_name):
     item = session.query(Item).filter_by(name=item_name, category_id = category.id).one()
 
     if request.method == 'POST':
+        ifItem = session.query(Item).filter_by(category_id = category.id, name = request.form['name']).all()
+        if len(ifItem) > 0 and item.name != request.form['name']:
+            flash('item(%s) edit failed: item(%s) is already exist in category(%s)' % (item.name, request.form['name'], category.name))
+            return redirect(url_for('categoryList', category_name = category_name))
+
         if request.form['name']:
             item.name = request.form['name']
         if request.form['description']:   
             item.description = request.form['description']
         if request.form['category']:   
-            newCategory = session.query(Category).filter_by(name=request.form['category']).one()
+            newCategory = session.query(Category).filter_by(name = request.form['category']).one()
             item.category_id = newCategory.id
+        item.time = getIntTime()
+
         session.add(item)
         session.commit()
 
-        return redirect(url_for('categoryList', category_name=category_name))
+        flash('item edit: %s' % item.name)
+
+        return redirect(url_for('itemDetail', category_name=category_name, item_name = item.name))
     else:
         all_category = session.query(Category).all()
         return render_template('edit.html', item=item, all_category = all_category, category_name = category.name)
-
-# Task 3: Create a route for deleteMenuItem function here
-
 
 @app.route('/catelog/<string:category_name>/<string:item_name>/delete/', methods = ['POST', 'GET'])
 def deleteItem(category_name, item_name):
@@ -197,6 +224,9 @@ def deleteItem(category_name, item_name):
 
         session.delete(itemToDelete)
         session.commit()
+
+        flash('item delete: %s' % item_name)
+
         return redirect(url_for('categoryList', category_name=category_name))
     else:
         return render_template('dele-item.html', item_name=item_name, category_name = category_name)
@@ -204,4 +234,4 @@ def deleteItem(category_name, item_name):
 if __name__ == '__main__':
     app.secret_key = 'secret'
     app.debug = True
-    app.run(host='127.0.0.1', port=5000)
+    app.run(host='0.0.0.0', port=5000)

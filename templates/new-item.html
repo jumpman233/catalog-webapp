@@ -1,22 +1,31 @@
-<form action="{{ url_for('newItem') }}" method="POST">
-    <div>
-        <label for="name">Title</label>
-        <input type="text" name="name"/>
-    </div>
-    
-    <div>
-        <label for="description">Description</label>
-        <input type="text" name="description"/>
-    </div>
+{% extends "layout.html" %}
 
-    <div>
-        <label for="category">Category</label>
-        <select name="category" id="category">
-            {% for i in all_category %}
-                <option value="{{i.name}}">{{i.name}}</option>
-            {% endfor %}
-        </select>
-    </div>
+{% block body %}
+    <h3 class="page-section-title">Edit Item</h3>
 
-    <button>submit</button>
-</form>
+    <form action="{{ url_for('newItem') }}" class="page-form" method="POST">
+        <div class="form-item">
+            <label for="name">Title</label>
+            <input type="text" name="name"/>
+        </div>
+        
+        <div class="form-item">
+            <label for="description">Description</label>
+            <input type="text" name="description"/>
+        </div>
+
+        <div class="form-item">
+            <label for="category">Category</label>
+            <select name="category" id="category">
+                {% for i in all_category %}
+                    <option value="{{i.name}}">{{i.name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-item">
+            <button>submit</button>    
+            <button><a href="{{ url_for('catelog') }}">Cancel</a></button> 
+        </div>
+    </form>
+{% endblock %}
