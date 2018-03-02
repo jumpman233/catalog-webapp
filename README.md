@@ -28,8 +28,8 @@ An application that provides a list of items within a variety of categories as w
     time(Integer)
 ## Authentication
 - Github
-Because of the GFW in China, I can not get Google service with my server.
-So I just use the github oauth authentication. Besides, It's a pity that I cannot find a api to disconnect from github oauth authentication.
+**Because of the GFW in China, I can not get Google service with my server.So I just use the github oauth authentication.**
+**Besides, It's a pity that I cannot find a api to disconnect from github oauth authentication.**
 ## CRUD
 1. Create: 
     You can build a item with a name, description and choose a category.
