@@ -118,7 +118,6 @@ def catelogJSON():
         for j in items:
             if j.category_id == i.id:
                 temp = j.serialize
-                temp['cat_id'] = i.id
                 li += [temp]
         temp = i.serialize
         if len(li) > 0:
@@ -225,6 +224,10 @@ access_token=%s' % response['access_token']
 def newItem():
     """Create a new item."""
     if request.method == 'POST':
+        if request.form['name'].strip() == '':
+            flash('item create failed: name is empty!')
+            return redirect(url_for('newItem'))
+
         category = session.query(
             Category).filter_by(
             name=request.form['category']).one()
@@ -234,15 +237,12 @@ def newItem():
         ifItem = session.query(Item).filter_by(
             category_id=ifCategory.id,
             name=request.form['name']).all()
-        if (len(ifItem) > 0 and (item.id != ifItem[0].id)):
-            flash('item(%s) edit failed: item(%s) \
+        if (len(ifItem) > 0):
+            flash('item create failed: item(%s) \
                 is already exist in category(%s)' % (
-                    item.name,
                     ifItem[0].name,
                     ifCategory.name))
-            return redirect(url_for(
-                'categoryList',
-                category_name=category_name))
+            return redirect(url_for('catelog'))
 
         newItem = Item(
             name=request.form['name'],
@@ -260,7 +260,10 @@ def newItem():
             item_name=newItem.name))
     else:
         all_category = session.query(Category).all()
-        return render_template('new-item.html', all_category=all_category)
+        return render_template(
+            'new-item.html',
+            all_category=all_category,
+            isLogin=checkLogin())
 
 
 @app.route(
@@ -274,6 +277,13 @@ def editItem(category_name, item_name):
         category_id=category.id).one()
 
     if request.method == 'POST':
+        if request.form['name'].strip() == '':
+            flash('item create failed: name is empty!')
+            return redirect(url_for(
+                'editItem',
+                category_name=category_name,
+                item_name=item_name))
+
         ifCategory = session.query(Category).filter_by(
             name=request.form['category']).one()
         ifItem = session.query(Item).filter_by(
@@ -314,7 +324,8 @@ def editItem(category_name, item_name):
             'edit.html',
             item=item,
             all_category=all_category,
-            category_name=category.name)
+            category_name=category.name,
+            isLogin=checkLogin())
 
 
 @app.route(
@@ -338,7 +349,8 @@ def deleteItem(category_name, item_name):
         return render_template(
             'dele-item.html',
             item_name=item_name,
-            category_name=category_name)
+            category_name=category_name,
+            isLogin=checkLogin())
 
 
 if __name__ == '__main__':

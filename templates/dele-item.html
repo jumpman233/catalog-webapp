@@ -3,6 +3,7 @@
 {% block body %}
     <h3 class="page-section-title">Delete Item</h3>
 
+    {% if isLogin %}
     <form action="{{ url_for('deleteItem', category_name = category_name, item_name = item_name) }}" method="POST" class="page-form">
         <div class="form-item">
             <p>Are you sure you want to delete item: <strong>{{ item_name }}</strong>?</p>     
@@ -13,4 +14,7 @@
             <button><a href="{{ url_for('catelog') }}">Cancel</a></button> 
         </div>
     </form>
+    {% else %}
+    <p class="no-access">You are not allowed to access this page.</p>
+    {% endif %}
 {% endblock %}
