@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+
+"""add some items to database."""
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -23,26 +27,41 @@ category1 = Category(name="Ball")
 session.add(category1)
 session.commit()
 
-item1 = Item(name="Footbal", description="A football, soccer ball, or association football ball is the ball used in the sport of association football.",
-                     category=category1)
+item1 = Item(
+    name="Footbal",
+    description="A football, \
+soccer ball, or association football ball is the ball \
+used in the sport of association football.",
+    category=category1)
 
 session.add(item1)
 session.commit()
 
-item1 = Item(name="Basketball", description="A basketball is a spherical ball used in basketball games. Basketballs typically range in size from very small promotional items only a few inches in diameter to extra large balls nearly a foot in diameter used in training exercises.",
-                     category=category1)
+item1 = Item(
+    name="Basketball",
+    description="A basketball is a spherical ball used in\
+ basketball games. Basketballs typically range in size from \
+ very small promotional items only a few inches in diameter to \
+ extra large balls nearly a foot in diameter used in training exercises.",
+    category=category1)
 
 session.add(item1)
 session.commit()
 
-item1 = Item(name="Bandy ball", description="A bandy ball is a rubber ball used for playing bandy.",
-                     category=category1)
+item1 = Item(
+    name="Bandy ball",
+    description="A bandy ball is a rubber ball used for playing bandy.",
+    category=category1)
 
 session.add(item1)
 session.commit()
 
-item1 = Item(name="Baseball", description="A baseball is a ball used in the sport of the same name, baseball. The ball features a rubber or cork center, wrapped in yarn, and covered.",
-                     category=category1)
+item1 = Item(
+    name="Baseball",
+    description="A baseball is a ball used in the sport of the same name, \
+baseball. The ball features a rubber or cork center, wrapped in yarn, and \
+covered.",
+    category=category1)
 
 session.add(item1)
 session.commit()
@@ -52,14 +71,21 @@ category1 = Category(name="Board game")
 session.add(category1)
 session.commit()
 
-item1 = Item(name="Chess", description="Chess is a two-player strategy board game played on a chessboard, a checkered gameboard with 64 squares arranged in an 88 grid.",
-                     category=category1)
+item1 = Item(
+    name="Chess",
+    description="Chess is a two-player strategy board game played on a \
+chessboard, a checkered gameboard with 64 squares arranged in an 88 grid.",
+    category=category1)
 
 session.add(item1)
 session.commit()
 
-item1 = Item(name="Connection game", description="ChessA connection game is a type of abstract strategy game in which players attempt to complete a specific type of connection with their pieces.",
-                     category=category1)
+item1 = Item(
+    name="Connection game",
+    description="ChessA connection game is a type of abstract strategy \
+game in which players attempt to complete a specific type of connection \
+with their pieces.",
+    category=category1)
 
 session.add(item1)
 session.commit()
