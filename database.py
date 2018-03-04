@@ -10,6 +10,22 @@ from sqlalchemy import create_engine
 Base = declarative_base()
 
 
+class User(Base):
+    """Table User"""
+
+    __tablename__ = 'user'
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String(250), nullable=False)
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializeable format."""
+        return {
+            'email': self.email,
+            'id': self.id,
+        }
+
 class Category(Base):
     """Table category."""
 
@@ -37,6 +53,8 @@ class Item(Base):
     description = Column(String(400))
     category_id = Column(Integer, ForeignKey('category.id'))
     category = relationship(Category)
+    auth_id = Column(Integer, ForeignKey('user.id'))
+    auth = relationship(User)
     time = Column(Integer)
 
     @property
@@ -47,7 +65,8 @@ class Item(Base):
             'description': self.description,
             'id': self.id,
             'category_id': self.category_id,
-            'time': self.time
+            'time': self.time,
+            'auth_id': self.auth_id
         }
 
 

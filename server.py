@@ -9,7 +9,7 @@ from flask import make_response, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from database import Base, Category, Item
+from database import Base, Category, Item, User
 
 import requests
 
@@ -54,10 +54,33 @@ def checkLogin():
     else:
         return False
 
-
 def getIntTime():
     """Get now time with type int."""
     return int(time.time())
+
+def getLoginUser():
+    """Get now login user"""
+    return session.query(User).filter_by(
+        email=login_session['email']).one()
+
+def redirectReferer():
+    """redirect to referer page"""
+    referer = request.headers.get('referer')
+    if referer == None:
+        referer = url_for('catelog')
+    return redirect(referer)
+
+
+@app.errorhandler(404)
+def error404(e):
+    """404 handler"""
+    return redirect(url_for('pageNotFound'))
+
+
+@app.route('/404')
+def pageNotFound():
+    """404 page"""
+    return render_template('404.html')
 
 
 @app.route('/')
@@ -76,9 +99,13 @@ def catelog():
 @app.route('/catelog/<string:category_name>/')
 def categoryList(category_name):
     """Category list page."""
-    category = session.query(Category).filter_by(name=category_name).one()
-    items = session.query(Item).filter_by(category_id=category.id)
-    count = session.query(Item).filter_by(category_id=category.id).count()
+    try:
+        category = session.query(Category).filter_by(name=category_name).one()
+        items = session.query(Item).filter_by(category_id=category.id)
+        count = session.query(Item).filter_by(category_id=category.id).count()
+    except Exception as e:
+        return redirect(url_for('pageNotFound'))
+    
     return render_template(
         'category.html',
         category=category,
@@ -88,15 +115,18 @@ def categoryList(category_name):
         isLogin=checkLogin(),
         count=count)
 
-
 @app.route('/catelog/<string:category_name>/<string:item_name>')
 def itemDetail(category_name, item_name):
     """Item detail page."""
-    category = session.query(Category).filter_by(name=category_name).one()
-    item = session.query(
-        Item).filter_by(
-        category_id=category.id,
-        name=item_name).one()
+    try:
+        category = session.query(Category).filter_by(name=category_name).one()
+        item = session.query(
+            Item).filter_by(
+            category_id=category.id,
+            name=item_name).one()
+    except Exception as e:
+        return redirect(url_for('pageNotFound'))
+    
     item.time = getIntTime()
     session.add(item)
     session.commit()
@@ -125,6 +155,18 @@ def catelogJSON():
         catelog += [temp]
 
     return jsonify(Categories=catelog)
+
+
+@app.route('/user/JSON')
+def userJSON():
+    """Get a json file within all users."""
+    user = session.query(User).all()
+    result = []
+
+    for i in user:
+        result += [i.serialize]
+
+    return jsonify(Users=result)
 
 
 @app.route('/login')
@@ -201,7 +243,6 @@ access_token=%s' % response['access_token']
         else:
             email = response[0]['email']
     except Exception as e:
-        print 'email get failed'
         response = make_response(
             json.dumps({'msg': 'Get email failed!', 'code': 0}),
             401)
@@ -210,6 +251,15 @@ access_token=%s' % response['access_token']
 
     login_session['email'] = email
     login_session['access_token'] = access_token
+
+    user = session.query(User).filter_by(
+        email=email).all()
+    if len(user) == 0:
+        newUser = User(email=email)
+        session.add(newUser)
+        session.commit()
+        flash("you are not logged in before, you are registed \
+            as %s" % login_session['email'])
 
     flash("you are now logged in as %s" % login_session['email'])
 
@@ -224,6 +274,9 @@ access_token=%s' % response['access_token']
 def newItem():
     """Create a new item."""
     if request.method == 'POST':
+        if not checkLogin():
+            return requests(url_for('catelog'))
+
         if request.form['name'].strip() == '':
             flash('item create failed: name is empty!')
             return redirect(url_for('newItem'))
@@ -247,7 +300,8 @@ def newItem():
         newItem = Item(
             name=request.form['name'],
             description=request.form['description'],
-            category_id=category.id,
+            category=category,
+            auth=getLoginUser(),
             time=getIntTime())
         session.add(newItem)
         session.commit()
@@ -271,12 +325,27 @@ def newItem():
     methods=['POST', 'GET'])
 def editItem(category_name, item_name):
     """Edit a item."""
-    category = session.query(Category).filter_by(name=category_name).one()
-    item = session.query(Item).filter_by(
-        name=item_name,
-        category_id=category.id).one()
+    try:
+        category = session.query(Category).filter_by(name=category_name).one()
+        item = session.query(Item).filter_by(
+            name=item_name,
+            category_id=category.id).one()
+        user = getLoginUser()
+        item_auth = session.query(User).filter_by(
+            id=item.auth_id).one()
+    except Exception as e:
+        return redirect(url_for('pageNotFound'))
+
+    if item.auth_id != user.id:
+        flash('You can not edit item: %s.\
+            This item can only be operated by\
+             %s' % (item.name, item_auth.email))
+        return redirectReferer()
 
     if request.method == 'POST':
+        if not checkLogin():
+            return requests(url_for('catelog'))
+
         if request.form['name'].strip() == '':
             flash('item create failed: name is empty!')
             return redirect(url_for(
@@ -333,11 +402,27 @@ def editItem(category_name, item_name):
     methods=['POST', 'GET'])
 def deleteItem(category_name, item_name):
     """Delete a item."""
-    if request.method == 'POST':
+    try:
         category = session.query(Category).filter_by(name=category_name).one()
         itemToDelete = session.query(Item).filter_by(
             name=item_name,
             category_id=category.id).one()
+        item_auth = session.query(User).filter_by(
+            id=itemToDelete.auth_id).one()
+        user = getLoginUser()
+    except Exception as e:
+        return redirect(url_for('pageNotFound'))
+    
+
+    if itemToDelete.auth_id != user.id:
+        flash('You can not delete item: %s.\
+            This item can only be operated \
+            by %s' % (itemToDelete.name, item_auth.email))
+        return redirectReferer()
+
+    if request.method == 'POST':
+        if not checkLogin():
+            return requests(url_for('catelog'))
 
         session.delete(itemToDelete)
         session.commit()
