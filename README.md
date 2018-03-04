@@ -29,7 +29,7 @@ An application that provides a list of items within a variety of categories as w
 ## Authentication
 - Github
 **Because of the GFW in China, I can't get Google service with my server, neither nor Facebook. So I just use the github oauth authentication.**
-**Besides, It's a pity that I can't find a api to disconnect from github oauth authentication, the logout feature is strong enough.**
+**Besides, It's a pity that I can't find a api to disconnect from github oauth authentication, the logout feature is not strong enough.**
 ## CRUD
 1. Create: 
     You can build a item with a name, description and choose a category.
