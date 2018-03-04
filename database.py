@@ -11,7 +11,7 @@ Base = declarative_base()
 
 
 class User(Base):
-    """Table User"""
+    """Table User."""
 
     __tablename__ = 'user'
 
@@ -25,6 +25,7 @@ class User(Base):
             'email': self.email,
             'id': self.id,
         }
+
 
 class Category(Base):
     """Table category."""

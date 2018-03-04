@@ -54,32 +54,35 @@ def checkLogin():
     else:
         return False
 
+
 def getIntTime():
     """Get now time with type int."""
     return int(time.time())
 
+
 def getLoginUser():
-    """Get now login user"""
+    """Get now login user."""
     return session.query(User).filter_by(
         email=login_session['email']).one()
 
+
 def redirectReferer():
-    """redirect to referer page"""
+    """redirect to referer page."""
     referer = request.headers.get('referer')
-    if referer == None:
+    if not referer:
         referer = url_for('catelog')
     return redirect(referer)
 
 
 @app.errorhandler(404)
 def error404(e):
-    """404 handler"""
+    """404 handler."""
     return redirect(url_for('pageNotFound'))
 
 
 @app.route('/404')
 def pageNotFound():
-    """404 page"""
+    """404 page."""
     return render_template('404.html')
 
 
@@ -105,7 +108,7 @@ def categoryList(category_name):
         count = session.query(Item).filter_by(category_id=category.id).count()
     except Exception as e:
         return redirect(url_for('pageNotFound'))
-    
+
     return render_template(
         'category.html',
         category=category,
@@ -114,6 +117,7 @@ def categoryList(category_name):
         all_categories=getAllCategory(),
         isLogin=checkLogin(),
         count=count)
+
 
 @app.route('/catelog/<string:category_name>/<string:item_name>')
 def itemDetail(category_name, item_name):
@@ -126,7 +130,7 @@ def itemDetail(category_name, item_name):
             name=item_name).one()
     except Exception as e:
         return redirect(url_for('pageNotFound'))
-    
+
     item.time = getIntTime()
     session.add(item)
     session.commit()
@@ -412,7 +416,6 @@ def deleteItem(category_name, item_name):
         user = getLoginUser()
     except Exception as e:
         return redirect(url_for('pageNotFound'))
-    
 
     if itemToDelete.auth_id != user.id:
         flash('You can not delete item: %s.\

@@ -126,7 +126,8 @@ item1 = Item(
     name="Water skiing",
     description="CWater skiing (also waterskiing or water-skiing) is a surface \
 water sport in which an individual is pulled behind a boat or a cable ski \
-installation over a body of water, skimming the surface on two skis or one ski.",
+installation over a body of water, skimming the surface on two skis or one \
+ski.",
     category=category1,
     auth=user1)
 
@@ -136,9 +137,10 @@ session.commit()
 item1 = Item(
     name="Air racing",
     description="Air racing is a highly specialised type of motorsport that \
-involves airplanes or other types of aircraft that compete over a fixed course, \
-with the winner either returning the shortest time, the one to complete it with \
-the most points, or to come closest to a previously estimated time.",
+involves airplanes or other types of aircraft that compete over a fixed \
+course, with the winner either returning the shortest time, the one to \
+complete it with the most points, or to come closest to a previously \
+estimated time.",
     category=category1,
     auth=user1)
 
@@ -147,9 +149,9 @@ session.commit()
 
 item1 = Item(
     name="Motocross",
-    description="Motocross is a form of off-road motorcycle racing held on enclosed \
-off-road circuits. The sport evolved from motorcycle trials competitions held in \
-the United Kingdom.",
+    description="Motocross is a form of off-road motorcycle racing held \
+on enclosed off-road circuits. The sport evolved from motorcycle \
+trials competitions held in the United Kingdom.",
     category=category1,
     auth=user1)
 
@@ -158,9 +160,9 @@ session.commit()
 
 item1 = Item(
     name="Mountainboarding",
-    description="Mountainboarding, also known as Dirtboarding, Offroad Boarding, and \
-All-Terrain Boarding (ATB), is a well established[1] if little-known action sport, \
-derived from snowboarding.",
+    description="Mountainboarding, also known as Dirtboarding, Offroad Boarding,\
+ and All-Terrain Boarding (ATB), is a well established[1] if little-known \
+ action sport, derived from snowboarding.",
     category=category1,
     auth=user1)
 
