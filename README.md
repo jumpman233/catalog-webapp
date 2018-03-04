@@ -17,6 +17,10 @@ An application that provides a list of items within a variety of categories as w
 3. Run `python server.py` to start server
 4. Access http://localhost:5000 (or maybe you change the port) in browser.
 ## Database Structure
+	Table user,
+	id(Integer) as primary_key,
+	email(Str) as not null
+
     Table category,
     id(Integer) as primary_key,
     name(String) as not null
@@ -25,6 +29,7 @@ An application that provides a list of items within a variety of categories as w
     id(Integer) as primary_key,
     name(String) as not null,
     category_id(Integer) as foreign key(category.id)
+    auth_id(Integer) as foreign key(user.id)
     time(Integer)
 ## Authentication
 - Github
