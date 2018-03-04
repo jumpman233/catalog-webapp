@@ -38,13 +38,15 @@ An application that provides a list of items within a variety of categories as w
 2. Edit:
     You can edit a item's name, description and choose a category.
     You cannot create a new Item when a item has the same name and category.
-    You should at a login state.
+    You should at a login state. A item can only be edited by its creator.
 3. Delete:
     You can just delete item.
-    You should at a login state.
+    You should at a login state. A item can only be deleted by its creator.
 4. Read:
     Click item in page to look through.
     Everyone can access.
 ## API Endpoints
-Get the all JSON data with [http://localhost:5000/catelog/JSON](http://localhost:5000/catelog/JSON).
+Get the whole categories and items JSON data with [http://localhost:5000/catelog/JSON](http://localhost:5000/catelog/JSON).
+Get user data from 
+[http://localhost:5000/user/JSON](http://localhost:5000/user/JSON)
     
